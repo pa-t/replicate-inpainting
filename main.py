@@ -26,11 +26,18 @@ DICT_DEFAULT_VAL = "Not Present"
 IMAGE_DIR = "background-images"
 MASK_IMAGE_DIR = "mask-images"
 OUTPUT_IMAGE_DIR = "output-images"
+NUM_IMG_OUTPUTS = 1
+PROMPT_STRENGTH = 0.8
+NUM_INFERENCE_STEPS = 25
+GUIDANCE_SCALE = 7.5
 
 
 # set up defaultdict default value
 def def_value():
   return DICT_DEFAULT_VAL
+
+def default_prompt():
+  return "The snow-capped peaks of the Rocky Mountains rise majestically above a valley blanketed in powdery snow with a frozen river glinting in the sunshine, photorealistic, 8k, high resolution"
 
 
 # get all image names that have a mask
@@ -63,10 +70,10 @@ def run_pipeline(model_version, filename_list, prompt_dict):
             "prompt": prompt_dict[filename],
             "image": image,
             "mask": mask,
-            "prompt_strength": 0.8,
-            "num_outputs": 3,
-            "num_ingerence_steps": 25,
-            "guidance_scale": 7.5,  
+            "prompt_strength": PROMPT_STRENGTH,
+            "num_outputs": NUM_IMG_OUTPUTS,
+            "num_inference_steps": NUM_INFERENCE_STEPS,
+            "guidance_scale": GUIDANCE_SCALE,
           }
         )
         predictions[filename] = prediction
@@ -122,10 +129,11 @@ def main():
   version = model.versions.get("e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c")
 
   # store prompt(s) for each file name, can be read in later
-  prompt_dict = {
-    "image (60).png": "A peaceful lake nestled in a valley surrounded by the towering snowing mountains of the Alps, a mist is rising from the water with a golden sunrise illuminating the sky, photorealistic, 8k",
-    "image (64).png": "A sandy beach with crystal-clear water and palm trees swaying in the breeze with a sunset casting a warm glow over the scene, photorealistic, 8k"
-  }
+  prompt_dict = defaultdict(default_prompt)
+  prompt_dict["image (60).png"] = "A peaceful lake nestled in a valley surrounded by the towering snowing mountains of the Alps, a mist is rising from the water with a golden sunrise illuminating the sky, photorealistic, 8k"
+  prompt_dict["image (59).png"] = "A narrow cobblestone alley way in New York lined with brick buildings that are several stories tall with ivy climbing the walls and a small cafe with tables illuminated by an old-fashioned street lamp, photorealistic, 8k"
+  prompt_dict["image (63).png"] = "A winding trail leads through a dense, verdant forest, with a stunning waterfall tumbling down a rocky cliff in the distance, photorealistic, 8k"
+  prompt_dict["image (64).png"] = "A sandy beach with crystal-clear water and palm trees swaying in the breeze with a sunset casting a warm glow over the scene, photorealistic, 8k"
 
   # get all valid image filenames in list that have masks
   filename_list = get_filename_list()
