@@ -1,0 +1,6 @@
+.env
+
+background-images/*
+output-images/*
+
+.DS_Store
