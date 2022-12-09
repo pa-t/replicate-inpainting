@@ -8,12 +8,11 @@ import requests
 from replicate_base import ReplicateBase, DICT_DEFAULT_VAL, def_value
 
 class ReplicateMaskGen(ReplicateBase):
-  model_name = "arielreplicate/dichotomous_image_segmentation"
-  model_version_id = "69bd4043d3ff604dcf5abeb27e10d959d520f323cf990a188f072c578348c7fd"
-  NUM_INFERENCE_STEPS = 25
-
   def __init__(self):
     super().__init__()
+    self.model_name = "arielreplicate/dichotomous_image_segmentation"
+    self.model_version_id = "69bd4043d3ff604dcf5abeb27e10d959d520f323cf990a188f072c578348c7fd"
+    self.NUM_INFERENCE_STEPS = 25
     # initialize replicate model obj
     self.model = replicate.models.get(self.model_name)
     # get latest version (can be found with model.versions.list())
@@ -71,35 +70,45 @@ class ReplicateMaskGen(ReplicateBase):
       # check prediciton in dict
       if curr_prediction != DICT_DEFAULT_VAL:
         try:
+          new_mask_img_filepath = f"{self.MASK_IMAGE_DIR}/{filename}"
+          self.logger.info(f"writing image: {new_mask_img_filepath}")
           response = requests.get(curr_prediction.output)
           img = Image.open(BytesIO(response.content))
           inverted_image = ImageOps.invert(img)
-          inverted_image.save(f"{self.MASK_IMAGE_DIR}/{filename}")
+          inverted_image.save(new_mask_img_filepath)
         except Exception as e:
           self.logger.info(f"exception getting output from prediction: {curr_prediction.id}. Prediction status: {curr_prediction.status}, Output: {curr_prediction.output}")
           self.logger.exception(e)
   
 
   def run(self):
-    # get all valid image filenames in list that have masks
-    filename_list = self.get_filename_list()
+    mask_images = [filename for filename in os.listdir(self.MASK_IMAGE_DIR) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    target_images = [filename for filename in os.listdir(self.IMAGE_DIR) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    while len(mask_images) < len(target_images):
+      # get all valid image filenames in list that need masks
+      filename_list = self.get_filename_list()
 
-    self.logger.info(f"found {len(filename_list)} valid image names with masks...")
+      self.logger.info(f"found {len(filename_list)} valid image names needing masks...")
 
-    # run replicate pipeline
-    predictions = self.run_pipeline(
-      filename_list=filename_list,
-    )
+      # run replicate pipeline
+      predictions = self.run_pipeline(
+        filename_list=filename_list,
+      )
 
-    # need predictions in list form for some operations
-    prediction_list = [value for value in predictions.values()]
+      # need predictions in list form for some operations
+      prediction_list = [value for value in predictions.values()]
 
-    # wait for all predictions to complete
-    self.wait_for_predictions(prediction_list=prediction_list)
+      # wait for all predictions to complete
+      self.wait_for_predictions(prediction_list=prediction_list)
 
-    self.logger.info("predictions complete, fetching results...")
+      self.logger.info("predictions complete, fetching results...")
 
-    self.write_output(filename_list=filename_list, predictions=predictions)
+      self.write_output(filename_list=filename_list, predictions=predictions)
+      
+      # get all mask images now for comparison
+      mask_images = [filename for filename in os.listdir(self.MASK_IMAGE_DIR) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    
+    self.logger.info(f"{len(mask_images)} masks found for {len(target_images)}")
 
 
 if __name__ == '__main__':

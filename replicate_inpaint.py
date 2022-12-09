@@ -68,10 +68,17 @@ class ReplicateInPainting(ReplicateBase):
       if curr_prediction != DICT_DEFAULT_VAL:
         prediction_output = curr_prediction.output
         for output in prediction_output:
-          # wrap this in retry
-          response = requests.get(output)
-          img = Image.open(BytesIO(response.content))
-          img.save(f"{self.OUTPUT_IMAGE_DIR}/{datetime.now().isoformat()}-{filename}")
+          # create filepath for new mask image
+          new_mask_img_filepath = f"{self.OUTPUT_IMAGE_DIR}/{datetime.now().isoformat()}-{filename}"
+          self.logger.info(f"writing image: {new_mask_img_filepath}")
+          # retrieve output from prediction
+          try:
+            response = requests.get(output)
+            img = Image.open(BytesIO(response.content))
+            img.save(new_mask_img_filepath)
+          except Exception as e:
+            self.logger.info(f"exception writing {new_mask_img_filepath}")
+            self.logger.exception(e)
   
 
   def run(self):

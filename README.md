@@ -27,7 +27,25 @@ output-images/
 Need to add images to the `background-images` directory and the corresponding mask images to `mask-images` with the same name in each directory
 
 
-## Generate mask and no background images
+## Run pipeline
+```
+python3 pipeline.py
+
+-- or --
+
+python3 pipeline.py --mask replicate
+
+-- or --
+
+python3 pipeline.py --mask local --inpainting False
+
+ARGUMENTS:
+  -  `--mask` : default='local', options=['local', 'replicate'], specify which mask generator to use
+  -  `--inpainting` : default=True, options=[True, False], run inpainting or not
+```
+
+
+## Individually run generate mask and no background images
 ```
 python3 local_mask_generate.py
 ```
@@ -39,7 +57,7 @@ python3 replicate_mask_generate.py
 ```
 
 
-## Running
+## Individually running inpainting script
 ```
 python3 replicate_inpaint.py
 ```

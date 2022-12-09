@@ -15,15 +15,13 @@ def default_prompt():
 
 
 class ReplicateBase:
-  IMAGE_DIR = "background-images"
-  MASK_IMAGE_DIR = "mask-images"
-  OUTPUT_IMAGE_DIR = "output-images"
-  logging.basicConfig()
-  logger = logging.getLogger(__name__)
-  logger.setLevel(logging.INFO)
-
   def __init__(self):
-    pass
+    self.IMAGE_DIR = "background-images"
+    self.MASK_IMAGE_DIR = "mask-images"
+    self.OUTPUT_IMAGE_DIR = "output-images"
+    logging.basicConfig()
+    self.logger = logging.getLogger(__name__)
+    self.logger.setLevel(logging.INFO)
 
   def get_filename_list(self):
     """
@@ -49,6 +47,7 @@ class ReplicateBase:
     """
     check that all predictions are complete in list
     """
+    self.logger.info("waiting for predictions to complete...")
     start_time = perf_counter()
 
     # wait for first prediction to be finished
