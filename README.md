@@ -12,7 +12,7 @@ export REPLICATE_API_TOKEN=[token]
 ```
 
 
-For now the prompts are stored in a dict in the `main()` method in `main.py` where the key is the image file name and the value is the prompt, eventually read this in from elsewhere
+For now the prompts are stored in a dict in the `__init__()` method in `replicate_inpaint.py` where the key is the image file name and the value is the prompt, eventually read this in from elsewhere
 
 
 
@@ -29,16 +29,22 @@ Need to add images to the `background-images` directory and the corresponding ma
 
 ## Generate mask and no background images
 ```
-python3 mask_generate.py
+python3 local_mask_generate.py
 ```
-Not perfect, but does a good job at removing most backgrounds and masking the subject. The subject needs to be clear or else it wont give good results
+Not perfect, but does a good job at removing most backgrounds and masking the subject. The subject needs to be clear or else it wont give good results and does it all locally
+
+Can also use the `arielreplicate/dichotomous_image_segmentation` model hosted on replicate
+```
+python3 replicate_mask_generate.py
+```
 
 
 ## Running
 ```
-python3 main.py
+python3 replicate_inpaint.py
 ```
 
 ## More resources
 [replicate python docs](https://github.com/replicate/replicate-python#readme)
+
 [replicate web ui](https://replicate.com/stability-ai/stable-diffusion-inpainting)

@@ -2,5 +2,9 @@
 
 background-images/*
 output-images/*
+no-bg-images/*
+mask-images/*
 
 .DS_Store
+
+__pycache__/
