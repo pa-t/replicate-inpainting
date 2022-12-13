@@ -17,18 +17,19 @@ class LocalMaskGen:
     self.logger = logging.getLogger(__name__)
     self.logger.setLevel(logging.INFO)
 
-    # constants
-    self.INPUT_IMAGE_DIR = "background-images"
-    self.NO_BG_IMAGE_DIR = "no-bg-images"
-    self.MASK_IMAGE_DIR = "mask-images"
-
+  def set_constants(self, batch: bool, input_path: str, no_bg_path: str, mask_path: str):
+    """set constants used during mask generation"""
+    self.BATCH = batch
+    self.INPUT_PATH = input_path
+    self.NO_BG_PATH = no_bg_path
+    self.MASK_PATH = mask_path
 
   # generate a list of filenames to create masks for
   def get_filenames(self):
     filename_list = []
-    for filename in os.listdir(self.INPUT_IMAGE_DIR):
-      image = os.path.join(self.INPUT_IMAGE_DIR, filename)
-      mask = os.path.join(self.MASK_IMAGE_DIR, filename)
+    for filename in os.listdir(self.INPUT_PATH):
+      image = os.path.join(self.INPUT_PATH, filename)
+      mask = os.path.join(self.MASK_PATH, filename)
       # check if image file exists, is an image type, and no mask already exists
       if os.path.isfile(image) and not os.path.isfile(mask) and filename.lower().endswith(('.png', '.jpg', '.jpeg')):
         self.logger.info(f"no mask found for: {filename}, adding to list")
@@ -75,11 +76,9 @@ class LocalMaskGen:
     cv2.imwrite(output_path, im)
 
     self.logger.info(f"write successful: {output_path}")
-  
 
-  def run(self):
-    mask_images = [filename for filename in os.listdir(self.MASK_IMAGE_DIR) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
-    target_images = [filename for filename in os.listdir(self.INPUT_IMAGE_DIR) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
+
+  def run_batch(self, mask_images, target_images):
     while len(mask_images) < len(target_images):
       # get all valid image filenames in list that need masks
       filename_list = self.get_filenames()
@@ -87,9 +86,9 @@ class LocalMaskGen:
       self.logger.info(f"found {len(filename_list)} valid image names needing masks...")
 
       for filename in filename_list:
-        input_path = f"{self.INPUT_IMAGE_DIR}/{filename}"
-        no_bg_path = f"{self.NO_BG_IMAGE_DIR}/{filename}"
-        mask_path = f"{self.MASK_IMAGE_DIR}/{filename}"
+        input_path = f"{self.INPUT_PATH}/{filename}"
+        no_bg_path = f"{self.NO_BG_PATH}/{filename}"
+        mask_path = f"{self.MASK_PATH}/{filename}"
         
         output = self.remove_background(file_path=input_path)
 
@@ -98,9 +97,32 @@ class LocalMaskGen:
         self.create_binary_mask(filename, no_bg_path, mask_path)
       
       # get all mask images now for comparison
-      mask_images = [filename for filename in os.listdir(self.MASK_IMAGE_DIR) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
-    
-    self.logger.info(f"{len(mask_images)} masks found for {len(target_images)}")
+      mask_images = [filename for filename in os.listdir(self.MASK_PATH) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
+
+  
+  def run_single(self, mask_images):
+    # just looking for one image in the mask directory
+    filename = self.INPUT_PATH.split("/")[-1]
+    while filename not in mask_images:
+      output = self.remove_background(file_path=self.INPUT_PATH)
+
+      no_bg_path = f"{self.NO_BG_PATH}/{filename}"
+      no_bg_path = f"{self.MASK_PATH}/{filename}"
+
+      self.save_no_bg_image(self.INPUT_PATH, output, no_bg_path)
+
+      self.create_binary_mask(filename, no_bg_path, no_bg_path)
+
+      mask_images = [filename for filename in os.listdir(self.MASK_PATH) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
+
+
+  def run(self):
+    mask_images = [filename for filename in os.listdir(self.MASK_PATH) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    if self.BATCH:
+      target_images = [filename for filename in os.listdir(self.INPUT_PATH) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
+      self.run_batch(mask_images=mask_images, target_images=target_images)
+    else:
+      self.run_single(mask_images)
 
 
 if __name__ == '__main__':
