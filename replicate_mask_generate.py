@@ -1,14 +1,13 @@
 from collections import defaultdict
 import cv2
-from io import BytesIO
 import os
-from PIL import Image, ImageOps
+from PIL import ImageOps
 import replicate
-import requests
 
+from base_mask_gen import BaseMaskGen
 from replicate_base import ReplicateBase, DICT_DEFAULT_VAL, def_value
 
-class ReplicateMaskGen(ReplicateBase):
+class ReplicateMaskGen(ReplicateBase, BaseMaskGen):
   def __init__(self):
     super().__init__()
     self.model_name = "arielreplicate/dichotomous_image_segmentation"
@@ -18,14 +17,6 @@ class ReplicateMaskGen(ReplicateBase):
     self.model = replicate.models.get(self.model_name)
     # get latest version (can be found with model.versions.list())
     self.version = self.model.versions.get(self.model_version_id)
-  
-
-  def set_constants(self, batch: bool, input_path: str, no_bg_path: str, mask_path: str):
-    """set constants used during mask generation"""
-    self.BATCH = batch
-    self.INPUT_PATH = input_path
-    self.NO_BG_PATH = no_bg_path
-    self.MASK_PATH = mask_path
   
 
   def get_filename_list(self):
@@ -77,16 +68,20 @@ class ReplicateMaskGen(ReplicateBase):
     return predictions
   
 
-  def remove_background(self, image_path, mask_path, output_path):
+  def remove_background(self, image_path, mask_path, no_bg_path):
+    # read in original image and mask
     im = cv2.imread(image_path)
     mask = cv2.imread(mask_path)
+    # subtract the images to keep what was masked out
     diff = cv2.subtract(im, mask)
+    # make image background transparent instead of black
     tmp = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
     _,alpha = cv2.threshold(tmp,0,255,cv2.THRESH_BINARY)
     b, g, r = cv2.split(diff)
     rgba = [b,g,r, alpha]
     dst = cv2.merge(rgba,4)
-    cv2.imwrite(output_path, dst)
+    # write no background image to path
+    cv2.imwrite(no_bg_path, dst)
 
 
   def write_output(self, filename_list, predictions):
@@ -98,21 +93,24 @@ class ReplicateMaskGen(ReplicateBase):
           self.logger.error(f"Error with replicate: {curr_prediction.error}")
         else:
           try:
-            response = requests.get(curr_prediction.output)
-            img = Image.open(BytesIO(response.content))
-            inverted_image = ImageOps.invert(img)
+            replicate_img = self.request_image(curr_prediction.output)
+            inverted_image = ImageOps.invert(replicate_img)
             if self.BATCH:
+              # if we are running as batch, use filenames and treat paths as directories
               image_path = f"{self.INPUT_PATH}/{filename}"
-              new_mask_img_filepath = f"{self.MASK_PATH}/{filename}"
-              output_path = f"{self.NO_BG_PATH}/{filename}"
+              new_mask_path = f"{self.MASK_PATH}/{filename}"
+              no_bg_path = f"{self.NO_BG_PATH}/{filename}"
             else:
+              # if we are running for single files, need to split the path and get filename
               short_filename = filename.split("/")[-1]
+              # use filename as full path for initial image
               image_path = filename
-              new_mask_img_filepath = f"{self.MASK_PATH}/{short_filename}"
-              output_path = f"{self.NO_BG_PATH}/{short_filename}"
-            self.logger.info(f"writing image: {new_mask_img_filepath}")
-            inverted_image.save(new_mask_img_filepath)
-            self.remove_background(image_path=image_path, mask_path=new_mask_img_filepath, output_path=output_path)
+              new_mask_path = f"{self.MASK_PATH}/{short_filename}"
+              no_bg_path = f"{self.NO_BG_PATH}/{short_filename}"
+            # write 
+            self.logger.info(f"writing image: {new_mask_path}")
+            inverted_image.save(new_mask_path)
+            self.remove_background(image_path=image_path, mask_path=new_mask_path, output_path=no_bg_path)
           except Exception as e:
             self.logger.info(f"exception getting output from prediction: {curr_prediction.id}. Prediction status: {curr_prediction.status}, Output: {curr_prediction.output}")
             self.logger.exception(e)
@@ -160,18 +158,6 @@ class ReplicateMaskGen(ReplicateBase):
 
       # update mask_image list 
       mask_images = self.wait_for_pipeline(predictions=predictions, filename_list=[self.INPUT_PATH])
-
-
-
-  def run(self):
-    mask_images = [filename for filename in os.listdir(self.MASK_PATH) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
-    if self.BATCH:
-      target_images = [filename for filename in os.listdir(self.INPUT_PATH) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
-      self.run_batch(mask_images=mask_images, target_images=target_images)
-    else:
-      self.run_single(mask_images)
-    
-    self.logger.info(f"{len(mask_images)} masks found for {len(target_images)}")
 
 
 if __name__ == '__main__':

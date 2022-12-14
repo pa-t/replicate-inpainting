@@ -1,6 +1,9 @@
 import logging
 from time import perf_counter
+from io import BytesIO
 import os
+from PIL import Image
+import requests
 
 DICT_DEFAULT_VAL = "Not Present"
 
@@ -39,6 +42,12 @@ class ReplicateBase:
           filename_list.append(filename)
     
     return filename_list
+  
+
+  def request_image(self, output):
+    response = requests.get(output)
+    return Image.open(BytesIO(response.content))
+
 
   def run_pipeline(self, filename_list):
     raise NotImplemented

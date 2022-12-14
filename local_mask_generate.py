@@ -5,24 +5,19 @@ import cv2
 from rembg import remove
 from PIL import Image
 
+from base_mask_gen import BaseMaskGen
 
 """
 Using OpenCV, rembg, and PIL find and remove the background from a source directory, then make a binary mask of the subject
 """
 
-class LocalMaskGen:
+class LocalMaskGen(BaseMaskGen):
   def __init__(self):
     # set up logger
     logging.basicConfig()
     self.logger = logging.getLogger(__name__)
     self.logger.setLevel(logging.INFO)
 
-  def set_constants(self, batch: bool, input_path: str, no_bg_path: str, mask_path: str):
-    """set constants used during mask generation"""
-    self.BATCH = batch
-    self.INPUT_PATH = input_path
-    self.NO_BG_PATH = no_bg_path
-    self.MASK_PATH = mask_path
 
   # generate a list of filenames to create masks for
   def get_filenames(self):
@@ -114,15 +109,6 @@ class LocalMaskGen:
       self.create_binary_mask(filename, no_bg_path, no_bg_path)
 
       mask_images = [filename for filename in os.listdir(self.MASK_PATH) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
-
-
-  def run(self):
-    mask_images = [filename for filename in os.listdir(self.MASK_PATH) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
-    if self.BATCH:
-      target_images = [filename for filename in os.listdir(self.INPUT_PATH) if filename.lower().endswith(('.png', '.jpg', '.jpeg'))]
-      self.run_batch(mask_images=mask_images, target_images=target_images)
-    else:
-      self.run_single(mask_images)
 
 
 if __name__ == '__main__':
