@@ -37,7 +37,7 @@ python3 pipeline.py --mask replicate
 
 -- or --
 
-python3 pipeline.py --mask local ---no-inpainting
+python3 pipeline.py --mask local
 
 ARGUMENTS:
   -  `--mask` : default='local', options=['local', 'replicate'], specify which mask generator to use
@@ -47,7 +47,6 @@ ARGUMENTS:
   -  `--no-bg-path` : default="no-bg-images", Path for mask generation to write no background images to
   -  `--mask-path` : default="mask-images", Path for mask generation to write masks to
   -  `--inpainting` : default=True, Enable inpainting to run
-  <!-- -  `--no-inpainting` : default=True, Disable inpainting to run -->
   -  `--overlay` : Run overlay, disabled by default
   -  `--generate` : Run image generation in overlay module (stable diffusion model)
   -  `--no-generate` : Disbale image generation in overlay module
