@@ -1,11 +1,14 @@
 from collections import defaultdict
 import cv2
+from io import BytesIO
+import numpy as np
 import os
-from PIL import ImageOps
+from PIL import Image, ImageOps
 import replicate
+from time import perf_counter
 
-from base_mask_gen import BaseMaskGen
-from replicate_base import ReplicateBase, DICT_DEFAULT_VAL, def_value
+from components.base_mask_gen import BaseMaskGen
+from components.replicate_base import ReplicateBase, DICT_DEFAULT_VAL, def_value
 
 class ReplicateMaskGen(ReplicateBase, BaseMaskGen):
   def __init__(self):
@@ -115,6 +118,40 @@ class ReplicateMaskGen(ReplicateBase, BaseMaskGen):
             self.logger.info(f"exception getting output from prediction: {curr_prediction.id}. Prediction status: {curr_prediction.status}, Output: {curr_prediction.output}")
             self.logger.exception(e)
   
+
+  def create_binary_mask_endpoint(self, input: bytes):
+    self.logger.info("opening image...")
+    input_image = Image.open(input)
+    prediction = replicate.predictions.create(
+      version=self.version,
+      input={
+        "input_image": input,
+        "num_inference_steps": self.NUM_INFERENCE_STEPS
+      }
+    )
+    self.logger.info("waiting for predictions to complete...")
+    start_time = perf_counter()
+    prediction.wait()
+    stop_time = perf_counter()
+    self.logger.info(f"waited for predictions for {stop_time - start_time} seconds...")
+    if prediction.status != 'succeeded':
+      self.logger.error(f"Error from prediction pipeline: {prediction.error}")
+    
+    binary_mask_image = self.request_image(prediction.output)
+    cv2_mask_image = cv2.cvtColor(np.array(binary_mask_image), cv2.COLOR_RGB2BGR)
+    cv2_image = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
+    # TODO: this is flipped somehow
+    diff = cv2.subtract(cv2_image, cv2_mask_image)
+    # make image background transparent instead of black
+    tmp = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+    _, alpha = cv2.threshold(tmp, 0, 255, cv2.THRESH_BINARY)
+    b, g, r = cv2.split(diff)
+    rgba = [b, g, r, alpha]
+    dst = cv2.merge(rgba, 4)
+    # write no background image to path
+    # cv2.imwrite(no_bg_path, dst)
+    return binary_mask_image, Image.fromarray(dst)å
+
 
   def wait_for_pipeline(self, predictions, filename_list):
     # need predictions in list form for some operations

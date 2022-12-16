@@ -1,11 +1,12 @@
 import logging
+import numpy as np
 import os
 
 import cv2
 from rembg import remove
 from PIL import Image
 
-from base_mask_gen import BaseMaskGen
+from components.base_mask_gen import BaseMaskGen
 
 """
 Using OpenCV, rembg, and PIL find and remove the background from a source directory, then make a binary mask of the subject
@@ -71,6 +72,20 @@ class LocalMaskGen(BaseMaskGen):
     cv2.imwrite(output_path, im)
 
     self.logger.info(f"write successful: {output_path}")
+  
+
+  def create_binary_mask_endpoint(self, input_image):
+    input = Image.open(input_image)
+    no_bg_image = remove(input)
+
+    self.logger.info(f"reading in no bg photo to opencv: {no_bg_image}")
+    cv2_image = cv2.cvtColor(np.array(no_bg_image), cv2.COLOR_RGB2BGR)
+
+    self.logger.info(f"converting to binary mask")
+    img_gray = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2GRAY)
+    _, im = cv2.threshold(img_gray, 5, 255, cv2.THRESH_BINARY_INV)
+
+    return Image.fromarray(im)
 
 
   def run_batch(self, mask_images, target_images):

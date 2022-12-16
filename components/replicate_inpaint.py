@@ -2,10 +2,11 @@ from collections import defaultdict
 from datetime import datetime
 from io import BytesIO
 from PIL import Image
+from time import perf_counter
 import replicate
 import requests
 
-from replicate_base import ReplicateBase, DICT_DEFAULT_VAL, default_prompt, def_value
+from components.replicate_base import ReplicateBase, DICT_DEFAULT_VAL, default_prompt, def_value
 
 class ReplicateInPainting(ReplicateBase):
   model_name = "stability-ai/stable-diffusion-inpainting"
@@ -102,6 +103,44 @@ class ReplicateInPainting(ReplicateBase):
     self.logger.info("predictions complete, fetching results...")
 
     self.write_output(filename_list=filename_list, predictions=predictions)
+  
+
+  def run_endpoint(
+    self, 
+    image: bytes,
+    mask_image: bytes,
+    prompt: str = "",
+    num_outputs: int = 2,
+  ):
+    self.logger.info("reading in images...")
+    try:
+      img_tmp = BytesIO(image)
+      mask_tmp = BytesIO(mask_image)
+      prediction = replicate.predictions.create(
+        version=self.version,
+        input={
+          "prompt": prompt,
+          "image": img_tmp,
+          "mask": mask_tmp,
+          "prompt_strength": self.PROMPT_STRENGTH,
+          "num_outputs": num_outputs,
+          "num_inference_steps": self.NUM_INFERENCE_STEPS,
+          "guidance_scale": self.GUIDANCE_SCALE,
+        }
+      )
+      self.logger.info("waiting for pipeline to complete...")
+      start_time = perf_counter()
+      prediction.wait()
+      stop_time = perf_counter()
+      self.logger.info(f"waited for predictions for {stop_time - start_time} seconds...")
+      if prediction.status != 'succeeded':
+        self.logger.error(f"Error from prediction pipeline: {prediction.error}")
+      return prediction.output
+    except Exception as e:
+      self.logger.error("Exception running inpaint prediction:")
+      self.logger.exception(e)
+    return None
+
 
 
 if __name__ == '__main__':

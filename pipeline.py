@@ -1,10 +1,10 @@
 import argparse
 import logging
 
-from local_mask_generate import LocalMaskGen
-from replicate_inpaint import ReplicateInPainting
-from replicate_mask_generate import ReplicateMaskGen
-from overlay_image import OverlayImage
+from components.local_mask_generate import LocalMaskGen
+from components.replicate_inpaint import ReplicateInPainting
+from components.replicate_mask_generate import ReplicateMaskGen
+from components.overlay_image import OverlayImage
 
 
 logging.basicConfig()
@@ -79,9 +79,9 @@ def main():
   if args.overlay:
     overlay = OverlayImage()
     if args.generate:
-      overlay.generate_scenes(prompt=args.prompt, num_outputs=args.num_outputs)
+      _ = overlay.generate_scenes(prompt=args.prompt, num_outputs=args.num_outputs)
     if args.background_path and args.foreground_path and args.output_path:
-      overlay.overlay_image(
+      _ = overlay.overlay_image(
         background_path=args.background_path,
         foreground_path=args.foreground_path,
         output_path=args.output_path,
