@@ -5,6 +5,9 @@ env: flex
 entrypoint: gunicorn -b :$PORT main:app
 
 
+service: width-image
+
+
 service_account: width-image-upload@triple-whale-staging.iam.gserviceaccount.com
 
 
