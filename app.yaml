@@ -2,7 +2,7 @@
 
 runtime: python310
 env: standard
-entrypoint: gunicorn -b :$PORT api:app
+entrypoint: python3 api.py
 
 
 service: replicate-inpainting

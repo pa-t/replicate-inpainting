@@ -7,4 +7,3 @@ pydantic==1.9.2
 rembg==2.0.29
 replicate==0.4.0
 uvicorn==0.20.0
-gunicorn==20.1.0
