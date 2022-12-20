@@ -5,18 +5,18 @@ env: standard
 entrypoint: gunicorn -b :$PORT main:app
 
 
-service: width-image
+service: replicate-inpainting
 
 
 service_account: width-image-upload@triple-whale-staging.iam.gserviceaccount.com
 
 
-automatic_scaling:
-  min_num_instances: 1
-  max_num_instances: 5
-  cool_down_period_sec: 180
-  cpu_utilization:
-    target_utilization: 0.6
+# automatic_scaling:
+#   min_num_instances: 1
+#   max_num_instances: 5
+#   cool_down_period_sec: 180
+#   cpu_utilization:
+#     target_utilization: 0.6
 
 
 resources:
