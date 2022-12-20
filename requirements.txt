@@ -1,8 +1,9 @@
+fastapi==0.87.0
+google-cloud-storage==2.7.0
+numpy==1.23.5
+opencv-python-headless==4.6.0.66
+Pillow==9.3.0
+pydantic==1.9.2
 rembg==2.0.29
 replicate==0.4.0
-opencv-python-headless==4.6.0.66
-google-cloud-storage==2.7.0
-fastapi==0.87.0
 uvicorn==0.20.0
-pydantic==1.9.2
-numpy==1.23.5

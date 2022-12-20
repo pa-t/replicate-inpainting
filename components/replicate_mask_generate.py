@@ -1,7 +1,5 @@
 from collections import defaultdict
 import cv2
-from io import BytesIO
-import numpy as np
 import os
 from PIL import Image, ImageOps
 import replicate
@@ -72,6 +70,7 @@ class ReplicateMaskGen(ReplicateBase, BaseMaskGen):
   
 
   def remove_background(self, image_path, mask_path, no_bg_path):
+    # TODO: might want to switch to the .point method
     # read in original image and mask
     im = cv2.imread(image_path)
     mask = cv2.imread(mask_path)

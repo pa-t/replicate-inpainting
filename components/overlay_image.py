@@ -1,5 +1,4 @@
 from datetime import datetime
-import requests
 from io import BytesIO
 from PIL import Image
 import replicate
