@@ -31,8 +31,3 @@ liveness_check:
   timeout_sec: 4
   failure_threshold: 2
   success_threshold: 2
-
-
-libraries:
-  - name: gunicorn
-    version: 20.0.4
