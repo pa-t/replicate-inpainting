@@ -8,3 +8,5 @@ mask-images/*
 .DS_Store
 
 __pycache__/
+
+*.json

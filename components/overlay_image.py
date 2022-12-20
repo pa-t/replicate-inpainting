@@ -116,9 +116,7 @@ class OverlayImage(ReplicateBase):
 
     back_im = background_image.copy()
     back_im.paste(foreground_image, (x_pos, y_pos), mask=foreground_image)
-    self.logger.info("uploading overlaid image...")
-    # TODO: upload image to s3
-    return "path/to/image/in/s3.png"
+    return back_im
 
   
 

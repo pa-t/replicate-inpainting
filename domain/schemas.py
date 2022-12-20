@@ -16,7 +16,3 @@ class ImageListResponse(BaseModel):
     """
     output: List[str]
 
-
-class OverlayResponse(BaseModel):
-    output: str
-

@@ -138,19 +138,10 @@ class ReplicateMaskGen(ReplicateBase, BaseMaskGen):
       self.logger.error(f"Error from prediction pipeline: {prediction.error}")
     
     binary_mask_image = self.request_image(prediction.output)
-    cv2_mask_image = cv2.cvtColor(np.array(binary_mask_image), cv2.COLOR_RGB2BGR)
-    cv2_image = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
-    # TODO: this is flipped somehow
-    diff = cv2.subtract(cv2_image, cv2_mask_image)
-    # make image background transparent instead of black
-    tmp = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-    _, alpha = cv2.threshold(tmp, 0, 255, cv2.THRESH_BINARY)
-    b, g, r = cv2.split(diff)
-    rgba = [b, g, r, alpha]
-    dst = cv2.merge(rgba, 4)
-    # write no background image to path
-    # cv2.imwrite(no_bg_path, dst)
-    return binary_mask_image, Image.fromarray(dst)å
+    blank = input_image.point(lambda _: 0)
+    segmented = Image.composite(input_image, blank, binary_mask_image.convert("1"))
+
+    return binary_mask_image, segmented
 
 
   def wait_for_pipeline(self, predictions, filename_list):
