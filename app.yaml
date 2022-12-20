@@ -5,6 +5,9 @@ env: flex
 entrypoint: gunicorn -b :$PORT main:app
 
 
+service_account: width-image-upload@triple-whale-staging.iam.gserviceaccount.com
+
+
 automatic_scaling:
   min_num_instances: 1
   max_num_instances: 5
