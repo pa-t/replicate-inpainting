@@ -1,7 +1,7 @@
 # YAML file for google cloud deployment
 
 runtime: python310
-env: flex
+env: standard
 entrypoint: gunicorn -b :$PORT main:app
 
 
