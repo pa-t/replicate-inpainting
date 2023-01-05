@@ -1,6 +1,15 @@
 # replicate-inpainting
 
-## Getting started
+## Using API
+
+Endpoints:
+- `/create-binary-mask`: Takes in input image and option for MaskGen (`local` or `replicate`). Returns image mask and image with no background
+- `/infill-background`: Takes in input image, mask, prompt and number of outputs. Use the `/create-binary-mask` endpoint to generate the mask image. The prompt is used by the stable diffusion model to replace the background. `num_outputs` is the number of output images to create, if this number is too high the model may OOMKill and the request will fail.
+- `/generate-background`: This endpoint takes in a `prompt` and `num_outputs` to create new background images for use in later endpoints. This method may be preferred due to `/infill-background` results sometimes containing artifacts when trying to generating around an existing image. In testing we saw the `/infill-background` generate the rest of an outfit for an image of a t-shirt when trying to replace the background.
+- `/overlay-image`: Takes in a `foreground` image to overlay over the `background` image. Using the `/create-binary-mask` you can generate the image with no background to use as the foreground image. Then using `/generate-background` you can generate the background image(s). This endpoint also takes in `x_pos` and `y_pos` if the foreground image needs to be moved around in the new image.
+
+
+## Getting started with Pipeline
 Install requirements
 ```
 pip install -r requirements.txt
